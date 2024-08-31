@@ -112,20 +112,52 @@
             background-color: #000000;
             color: #ffffff;
         }
+        #timer {
+            color: #ff0f73;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+        .light-theme #timer {
+            color: #00114b;
+        }
+        #wordCount {
+            color: #ff0f73;
+        }
+        .light-theme #wordCount {
+            color: #00114b;
+        }
+        .light-theme #timeSelect {
+            background-color: #fff;
+            color: black;
+            border: 1px solid #00114b;
+        }
         </style>
 </head>
 <body>
     <div id="themeSwitcher"><i class="ri-sun-fill"></i></div>
     <div class="container mx-auto p-8">
         <h1 class="text-3xl mb-4">Typing Practice</h1>
+
+        <div class="mb-4 absolute left-1/2 flex h-8 gap-4 items-center -translate-x-1/2 top-6 ">
+            <label for="timeSelect" >Set Timer:</label>
+            <select class="bg-zinc-800 rounded-md px-2 py-1 " id="timeSelect" class="ml-2">
+                <option value="1200">20 minutes</option>
+                <option value="1800">30 minutes</option>
+                <option value="2400">40 minutes</option>
+            </select>
+            <button id="startTimerBtn" class="ml-4 px-2 py-1 bg-blue-700 text-white rounded">Start Timer</button>
+            <div id="timer" class="mt-4">Time Left: 00:00:00</div>
+        </div>
+
         <textarea id="typingArea" class="mt-2" placeholder="Start typing here..."></textarea>
-        <div class="mt-4">
+        <div class="mt-1">
             <button id="resetBtn">Reset</button>
         </div>
-        <h2 class="text-2xl mt-6">Count Details:</h2>
-        <div id="result" class="mt-4"></div>
-        <h2 class="text-2xl mt-6 text-white">Alphabet Usage:</h2>
-        <div id="alphabetStats" class="mt-3"></div>
+        <h2 class="text-2xl mt-3">Count Details:</h2>
+        <div id="result" class="mt-2"></div>
+        <h2 id="wordCount" class="text-2xl mt-3">Word Count : 0</h2>
+        <h2 class="text-2xl mt-3 text-white">Alphabet Usage:</h2>
+        <div id="alphabetStats" class="mt-2"></div>
     </div>
 
     <script>
@@ -134,11 +166,18 @@
         const result = document.getElementById('result');
         const alphabetStats = document.getElementById('alphabetStats');
         const themeSwitcher = document.getElementById('themeSwitcher');
+        const timeSelect = document.getElementById('timeSelect');
+        const startTimerBtn = document.getElementById('startTimerBtn');
+        const timerDisplay = document.getElementById('timer');
+        const wordCountDisplay = document.getElementById('wordCount');
 
         let backspaceCount = 0;
         let deleteCount = 0;
         let arrowCounts = { up: 0, down: 0, left: 0, right: 0 };
         let alphabetCount = {};
+        let wordCount = 0;
+        let timerInterval;
+        let totalSeconds;
 
         typingArea.addEventListener('keydown', (e) => {
             const key = e.key.toLowerCase();
@@ -158,6 +197,11 @@
                 alphabetCount[key] = (alphabetCount[key] || 0) + 1;
             }
             updateAlphabetStats();
+        });
+
+        typingArea.addEventListener('input', () => {
+            wordCount = typingArea.value.split(/\s+/).filter(word => word.length > 0).length;
+            updateWordCount();
         });
 
         function updateAlphabetStats() {
@@ -181,25 +225,50 @@
             `;
         }
 
+        function updateWordCount() {
+            wordCountDisplay.textContent = `Word Count : ${wordCount}`;
+        }
+
         resetBtn.addEventListener('click', () => {
             typingArea.value = '';
             typingArea.disabled = false;
             result.innerHTML = '';
+            wordCountDisplay.textContent = 'Word Count: 0';
             alphabetCount = {};
             backspaceCount = 0;
             deleteCount = 0;
             arrowCounts = { up: 0, down: 0, left: 0, right: 0 };
             updateAlphabetStats();
+            clearInterval(timerInterval);
+            timerDisplay.textContent = 'Time Left: 00:00:00';
         });
+
+        startTimerBtn.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            totalSeconds = parseInt(timeSelect.value);
+            timerInterval = setInterval(updateTimer, 1000);
+        });
+
+        function updateTimer() {
+            let hours = Math.floor(totalSeconds / 3600);
+            let minutes = Math.floor((totalSeconds % 3600) / 60);
+            let seconds = totalSeconds % 60;
+
+            timerDisplay.textContent = `Time Left: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            if (totalSeconds > 0) {
+                totalSeconds--;
+            } else {
+                clearInterval(timerInterval);
+                typingArea.disabled = true;
+            }
+        }
 
         themeSwitcher.addEventListener('click', () => {
             document.body.classList.toggle('light-theme');
-            if(themeSwitcher.innerHTML==='<i class="ri-sun-fill"></i>'){
-                themeSwitcher.innerHTML='<i class="ri-moon-fill"></i>'
-            }
-            else{
-                themeSwitcher.innerHTML='<i class="ri-sun-fill"></i>'
-            }
+            themeSwitcher.innerHTML = document.body.classList.contains('light-theme')
+                ? '<i class="ri-moon-clear-fill"></i>'
+                : '<i class="ri-sun-fill"></i>';
         });
     </script>
 </body>
